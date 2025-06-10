@@ -7,7 +7,8 @@ class SkateboardCalculator {
         this.resultsContainer = document.getElementById('results-container');
         this.initializeEventListeners();
         this.initializeUnitHandlers();
-        this.hideResults();
+        this.showResults(); // Always show results panel
+        this.setEmptyState(); // Initialize with empty/greyed out state
     }
 
     initializeEventListeners() {
@@ -115,12 +116,12 @@ class SkateboardCalculator {
     handleInputChange() {
         const formData = this.getFormData();
         
-        // Only calculate if we have minimum required data
+        // Always show results panel, but update content based on available data
         if (this.hasMinimumData(formData)) {
-            this.showResults();
+            this.enableResults();
             this.calculateRecommendations(formData);
         } else {
-            this.hideResults();
+            this.setEmptyState();
         }
     }
 
@@ -175,17 +176,50 @@ class SkateboardCalculator {
 
     showResults() {
         this.resultsContainer.style.display = 'block';
-        this.resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    enableResults() {
+        this.resultsContainer.classList.remove('empty-state');
+        this.resultsContainer.classList.add('active-state');
+    }
+
+    setEmptyState() {
+        this.resultsContainer.classList.add('empty-state');
+        this.resultsContainer.classList.remove('active-state');
+        
+        // Set all values to placeholder state
+        document.getElementById('deck-width').textContent = '--';
+        document.getElementById('deck-length').textContent = '--';
+        document.getElementById('wheelbase').textContent = '--';
+        document.getElementById('truck-width').textContent = '--';
+        document.getElementById('truck-height').textContent = '--';
+        document.getElementById('truck-tightness').textContent = '--';
+        document.getElementById('wheel-diameter').textContent = '--';
+        document.getElementById('wheel-hardness').textContent = '--';
+        document.getElementById('wheel-contact').textContent = '--';
+        document.getElementById('bearing-rating').textContent = '--';
+        document.getElementById('hardware-length').textContent = '--';
+        
+        // Clear explanations
+        document.getElementById('deck-explanation').textContent = 'Enter your details to see deck recommendations';
+        document.getElementById('truck-explanation').textContent = 'Enter your details to see truck recommendations';
+        document.getElementById('wheel-explanation').textContent = 'Enter your details to see wheel recommendations';
+        document.getElementById('bearing-explanation').textContent = 'Enter your details to see hardware recommendations';
+        document.getElementById('physics-explanation').innerHTML = 'Complete the form to see the science behind your personalized skateboard setup.';
     }
 
     hideResults() {
-        this.resultsContainer.style.display = 'none';
+        // Remove this method since we always show results now
+        // Keeping for backward compatibility but not used
     }
 
     calculateRecommendations(data) {
         // Add updating animation
         const resultCards = document.querySelectorAll('.result-card');
         resultCards.forEach(card => card.classList.add('updating'));
+        
+        // Add transition animation to container
+        this.resultsContainer.classList.add('transitioning');
 
         // Calculate deck specifications
         const deckSpecs = this.calculateDeckSpecs(data);
@@ -209,6 +243,7 @@ class SkateboardCalculator {
         // Remove updating animation
         setTimeout(() => {
             resultCards.forEach(card => card.classList.remove('updating'));
+            this.resultsContainer.classList.remove('transitioning');
         }, 300);
     }
 

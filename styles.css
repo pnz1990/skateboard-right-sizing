@@ -201,6 +201,64 @@ body::before {
     border: 1px solid rgba(255, 255, 255, 0.2);
     position: sticky;
     top: 20px;
+    transition: all 0.3s ease;
+}
+
+/* Empty state styling */
+.results-container.empty-state {
+    opacity: 0.6;
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.results-container.empty-state .result-card {
+    background: #f8f9fa;
+    color: #6c757d;
+    border-color: #e9ecef;
+}
+
+.results-container.empty-state .spec-value {
+    background: #e9ecef;
+    color: #adb5bd;
+    font-weight: 400;
+}
+
+.results-container.empty-state .explanation {
+    color: #6c757d;
+    font-style: italic;
+}
+
+.results-container.empty-state .physics-explanation {
+    background: #f8f9fa;
+    color: #6c757d;
+    border-left-color: #dee2e6;
+}
+
+/* Active state styling */
+.results-container.active-state {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.results-container.active-state .result-card {
+    background: #f7fafc;
+    color: #2d3748;
+    border-color: #e2e8f0;
+}
+
+.results-container.active-state .spec-value {
+    background: white;
+    color: #2d3748;
+    font-weight: 600;
+}
+
+.results-container.active-state .explanation {
+    color: #4a5568;
+}
+
+.results-container.active-state .physics-explanation {
+    background: #edf2f7;
+    color: #4a5568;
+    border-left-color: #667eea;
 }
 
 .results-container h2 {
@@ -398,6 +456,11 @@ body::before {
     
     .results-container {
         position: static;
+        order: 2; /* Show results after form on mobile */
+    }
+    
+    .form-container {
+        order: 1;
     }
     
     .results-grid {
@@ -441,10 +504,19 @@ body::before {
     animation: pulse 0.3s ease-in-out;
 }
 
+.results-container.transitioning {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
 @keyframes pulse {
     0% { transform: scale(1); }
     50% { transform: scale(1.02); }
     100% { transform: scale(1); }
+}
+
+@keyframes fadeIn {
+    0% { opacity: 0.6; }
+    100% { opacity: 1; }
 }
 
 /* Loading state */
