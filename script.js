@@ -510,8 +510,8 @@ class SkateboardCalculator {
         // Experience level consideration
         const experienceExplanations = {
             'beginner': 'Setup prioritizes stability and forgiveness to build confidence.',
-            'intermediate': 'Balanced setup allows progression while maintaining control.',
-            'comfortable': 'Setup fine-tuned for your developed preferences and skills.',
+            'comfortable': 'Balanced setup allows progression while maintaining control.',
+            'intermediate': 'Setup fine-tuned for your developed preferences and skills.',
             'advanced': 'Performance-oriented setup maximizes responsiveness and precision.'
         };
         explanations.push(`<strong>Experience Factor:</strong> ${experienceExplanations[data.experience]}`);
