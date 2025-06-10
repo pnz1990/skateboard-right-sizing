@@ -158,6 +158,7 @@ class SkateboardCalculator {
             ridingStyle: formData.get('ridingStyle') || '',
             terrain: formData.get('terrain') || '',
             stabilityPreference: parseInt(formData.get('stabilityPreference')) || 5,
+            flexibility: formData.get('flexibility') || '',
             // Store original units for display
             originalHeight: weightInput,
             heightUnit: heightUnit,
@@ -171,7 +172,7 @@ class SkateboardCalculator {
 
     hasMinimumData(data) {
         return data.height > 0 && data.weight > 0 && data.shoeSize > 0 && 
-               data.experience && data.ridingStyle && data.terrain;
+               data.experience && data.ridingStyle && data.terrain && data.flexibility;
     }
 
     showResults() {
@@ -191,9 +192,11 @@ class SkateboardCalculator {
         document.getElementById('deck-width').textContent = '--';
         document.getElementById('deck-length').textContent = '--';
         document.getElementById('wheelbase').textContent = '--';
+        document.getElementById('deck-concave').textContent = '--';
         document.getElementById('truck-width').textContent = '--';
         document.getElementById('truck-height').textContent = '--';
         document.getElementById('truck-tightness').textContent = '--';
+        document.getElementById('truck-responsiveness').textContent = '--';
         document.getElementById('wheel-diameter').textContent = '--';
         document.getElementById('wheel-hardness').textContent = '--';
         document.getElementById('wheel-contact').textContent = '--';
@@ -296,10 +299,30 @@ class SkateboardCalculator {
         const stabilityFactor = (data.stabilityPreference - 5) * 0.5;
         wheelbase += stabilityFactor;
 
+        // Calculate concave based on flexibility preference
+        // Physics: deeper concave = more control but less comfort
+        let concave = 'Medium'; // Default
+        
+        const concaveByFlexibility = {
+            'low': 'Deep',      // Stiff preference = deeper concave for control
+            'medium': 'Medium', // Balanced
+            'high': 'Mellow'    // Flexible preference = shallow concave for comfort
+        };
+        
+        concave = concaveByFlexibility[data.flexibility] || 'Medium';
+        
+        // Adjust concave based on riding style
+        if (data.ridingStyle === 'street') {
+            concave = concave === 'Mellow' ? 'Medium' : 'Deep'; // Street needs more control
+        } else if (data.ridingStyle === 'cruising') {
+            concave = concave === 'Deep' ? 'Medium' : 'Mellow'; // Cruising prioritizes comfort
+        }
+
         return {
             width: Math.round(baseWidth * 10) / 10,
             length: Math.round(baseLength * 10) / 10,
-            wheelbase: Math.round(wheelbase * 10) / 10
+            wheelbase: Math.round(wheelbase * 10) / 10,
+            concave: concave
         };
     }
 
@@ -339,10 +362,30 @@ class SkateboardCalculator {
             }
         }
 
+        // Calculate responsiveness based on flexibility preference
+        // Physics: more responsive trucks = quicker turning but less stable
+        let responsiveness = 'Standard'; // Default
+        
+        const responsivenessByFlexibility = {
+            'low': 'High',      // Stiff preference = high responsiveness
+            'medium': 'Standard', // Balanced
+            'high': 'Smooth'    // Flexible preference = smoother, less twitchy
+        };
+        
+        responsiveness = responsivenessByFlexibility[data.flexibility] || 'Standard';
+        
+        // Adjust based on riding style
+        if (data.ridingStyle === 'street') {
+            responsiveness = responsiveness === 'Smooth' ? 'Standard' : 'High';
+        } else if (data.ridingStyle === 'cruising' || data.ridingStyle === 'longboard') {
+            responsiveness = responsiveness === 'High' ? 'Standard' : 'Smooth';
+        }
+
         return {
             width: truckWidth,
             height: truckHeight,
-            tightness: tightness
+            tightness: tightness,
+            responsiveness: responsiveness
         };
     }
 
@@ -423,6 +466,7 @@ class SkateboardCalculator {
         document.getElementById('deck-width').textContent = `${specs.width}"`;
         document.getElementById('deck-length').textContent = `${specs.length}"`;
         document.getElementById('wheelbase').textContent = `${specs.wheelbase}"`;
+        document.getElementById('deck-concave').textContent = specs.concave;
 
         const explanation = this.getDeckExplanation(specs, data);
         document.getElementById('deck-explanation').textContent = explanation;
@@ -432,6 +476,7 @@ class SkateboardCalculator {
         document.getElementById('truck-width').textContent = `${specs.width}"`;
         document.getElementById('truck-height').textContent = specs.height;
         document.getElementById('truck-tightness').textContent = specs.tightness;
+        document.getElementById('truck-responsiveness').textContent = specs.responsiveness;
 
         const explanation = this.getTruckExplanation(specs, data);
         document.getElementById('truck-explanation').textContent = explanation;
@@ -458,19 +503,36 @@ class SkateboardCalculator {
         let explanation = `Width ${specs.width}" matches your shoe size for optimal foot placement. `;
         
         if (data.ridingStyle === 'street') {
-            explanation += "Narrower deck chosen for easier flip tricks and technical maneuvers.";
+            explanation += "Narrower deck chosen for easier flip tricks and technical maneuvers. ";
         } else if (data.ridingStyle === 'cruising') {
-            explanation += "Wider deck provides more stability and comfort for cruising.";
+            explanation += "Wider deck provides more stability and comfort for cruising. ";
         } else {
-            explanation += `Length ${specs.length}" provides good balance for your height and riding style.`;
+            explanation += `Length ${specs.length}" provides good balance for your height and riding style. `;
         }
+        
+        // Add concave explanation
+        const concaveExplanations = {
+            'Deep': 'Deep concave provides maximum control and board feel for technical riding.',
+            'Medium': 'Medium concave offers a balanced feel between control and comfort.',
+            'Mellow': 'Mellow concave prioritizes comfort for longer rides and cruising.'
+        };
+        explanation += concaveExplanations[specs.concave];
 
         return explanation;
     }
 
     getTruckExplanation(specs, data) {
         let explanation = `${specs.height} trucks chosen for your riding style. `;
-        explanation += `${specs.tightness} tightness recommended based on your weight (${data.weight}kg) and stability preference.`;
+        explanation += `${specs.tightness} tightness recommended based on your weight (${data.weight}kg) and stability preference. `;
+        
+        // Add responsiveness explanation
+        const responsivenessExplanations = {
+            'High': 'High responsiveness for quick, precise turns and technical maneuvers.',
+            'Standard': 'Standard responsiveness provides balanced turning characteristics.',
+            'Smooth': 'Smooth responsiveness for stable, predictable turning feel.'
+        };
+        explanation += responsivenessExplanations[specs.responsiveness];
+        
         return explanation;
     }
 
@@ -515,6 +577,14 @@ class SkateboardCalculator {
             'advanced': 'Performance-oriented setup maximizes responsiveness and precision.'
         };
         explanations.push(`<strong>Experience Factor:</strong> ${experienceExplanations[data.experience]}`);
+
+        // Flexibility consideration
+        const flexibilityExplanations = {
+            'low': 'Stiff setup with deep concave and high responsiveness for maximum control and feedback.',
+            'medium': 'Balanced flexibility providing good control while maintaining comfort.',
+            'high': 'Flexible setup with mellow concave and smooth responsiveness for comfort and forgiveness.'
+        };
+        explanations.push(`<strong>Flexibility Tuning:</strong> ${flexibilityExplanations[data.flexibility]}`);
 
         document.getElementById('physics-explanation').innerHTML = explanations.join('<br><br>');
     }

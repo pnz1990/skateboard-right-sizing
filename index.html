@@ -122,6 +122,17 @@
                         </div>
                         <div class="tooltip" data-tooltip="Affects wheelbase length and truck tightness recommendations">ℹ️</div>
                     </div>
+
+                    <div class="input-group">
+                        <label for="flexibility">Flexibility Preference</label>
+                        <select id="flexibility" name="flexibility" required>
+                            <option value="">Select flexibility</option>
+                            <option value="low">Low (Stiff, responsive)</option>
+                            <option value="medium">Medium (Balanced feel)</option>
+                            <option value="high">High (Flexible, forgiving)</option>
+                        </select>
+                        <div class="tooltip" data-tooltip="Affects deck concave depth and truck responsiveness for your riding comfort">ℹ️</div>
+                    </div>
                 </section>
             </form>
 
@@ -144,6 +155,10 @@
                             <span class="spec-label">Wheelbase:</span>
                             <span class="spec-value" id="wheelbase">-</span>
                         </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Concave:</span>
+                            <span class="spec-value" id="deck-concave">-</span>
+                        </div>
                         <div class="explanation" id="deck-explanation"></div>
                     </div>
 
@@ -160,6 +175,10 @@
                         <div class="spec-item">
                             <span class="spec-label">Tightness:</span>
                             <span class="spec-value" id="truck-tightness">-</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Responsiveness:</span>
+                            <span class="spec-value" id="truck-responsiveness">-</span>
                         </div>
                         <div class="explanation" id="truck-explanation"></div>
                     </div>
