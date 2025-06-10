@@ -124,14 +124,25 @@
                     </div>
 
                     <div class="input-group">
-                        <label for="flexibility">Flexibility Preference</label>
+                        <label for="flexibility">Your Flexibility</label>
                         <select id="flexibility" name="flexibility" required>
-                            <option value="">Select flexibility</option>
-                            <option value="low">Low (Stiff, responsive)</option>
-                            <option value="medium">Medium (Balanced feel)</option>
-                            <option value="high">High (Flexible, forgiving)</option>
+                            <option value="">Select your flexibility</option>
+                            <option value="low">Low (Stiff joints, limited range)</option>
+                            <option value="medium">Medium (Average flexibility)</option>
+                            <option value="high">High (Very flexible, good range)</option>
                         </select>
-                        <div class="tooltip" data-tooltip="Affects deck concave depth and truck responsiveness for your riding comfort">ℹ️</div>
+                        <div class="tooltip" data-tooltip="Your physical flexibility affects optimal deck concave and truck setup for comfort">ℹ️</div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="board-feel">Board Feel Preference</label>
+                        <select id="board-feel" name="boardFeel" required>
+                            <option value="">Select preference</option>
+                            <option value="light">Light (Easy pop, agile handling)</option>
+                            <option value="durable">Durable (Strength and resilience)</option>
+                            <option value="grippy">Grippy (Solid traction and control)</option>
+                        </select>
+                        <div class="tooltip" data-tooltip="Affects overall setup characteristics - weight, durability, or grip focus">ℹ️</div>
                     </div>
                 </section>
             </form>
@@ -158,6 +169,10 @@
                         <div class="spec-item">
                             <span class="spec-label">Concave:</span>
                             <span class="spec-value" id="deck-concave">-</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Construction:</span>
+                            <span class="spec-value" id="deck-construction">-</span>
                         </div>
                         <div class="explanation" id="deck-explanation"></div>
                     </div>
@@ -201,7 +216,7 @@
                     </div>
 
                     <div class="result-card">
-                        <h3>⚙️ Bearings & Hardware</h3>
+                        <h3>⚙️ Setup & Extras</h3>
                         <div class="spec-item">
                             <span class="spec-label">Bearing Rating:</span>
                             <span class="spec-value" id="bearing-rating">-</span>
@@ -209,6 +224,14 @@
                         <div class="spec-item">
                             <span class="spec-label">Hardware Length:</span>
                             <span class="spec-value" id="hardware-length">-</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Risers:</span>
+                            <span class="spec-value" id="risers">-</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Setup Weight:</span>
+                            <span class="spec-value" id="setup-weight">-</span>
                         </div>
                         <div class="explanation" id="bearing-explanation"></div>
                     </div>

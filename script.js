@@ -159,6 +159,7 @@ class SkateboardCalculator {
             terrain: formData.get('terrain') || '',
             stabilityPreference: parseInt(formData.get('stabilityPreference')) || 5,
             flexibility: formData.get('flexibility') || '',
+            boardFeel: formData.get('boardFeel') || '',
             // Store original units for display
             originalHeight: weightInput,
             heightUnit: heightUnit,
@@ -172,7 +173,8 @@ class SkateboardCalculator {
 
     hasMinimumData(data) {
         return data.height > 0 && data.weight > 0 && data.shoeSize > 0 && 
-               data.experience && data.ridingStyle && data.terrain && data.flexibility;
+               data.experience && data.ridingStyle && data.terrain && 
+               data.flexibility && data.boardFeel;
     }
 
     showResults() {
@@ -193,6 +195,7 @@ class SkateboardCalculator {
         document.getElementById('deck-length').textContent = '--';
         document.getElementById('wheelbase').textContent = '--';
         document.getElementById('deck-concave').textContent = '--';
+        document.getElementById('deck-construction').textContent = '--';
         document.getElementById('truck-width').textContent = '--';
         document.getElementById('truck-height').textContent = '--';
         document.getElementById('truck-tightness').textContent = '--';
@@ -202,6 +205,8 @@ class SkateboardCalculator {
         document.getElementById('wheel-contact').textContent = '--';
         document.getElementById('bearing-rating').textContent = '--';
         document.getElementById('hardware-length').textContent = '--';
+        document.getElementById('risers').textContent = '--';
+        document.getElementById('setup-weight').textContent = '--';
         
         // Clear explanations
         document.getElementById('deck-explanation').textContent = 'Enter your details to see deck recommendations';
@@ -299,14 +304,14 @@ class SkateboardCalculator {
         const stabilityFactor = (data.stabilityPreference - 5) * 0.5;
         wheelbase += stabilityFactor;
 
-        // Calculate concave based on flexibility preference
-        // Physics: deeper concave = more control but less comfort
+        // Calculate concave based on rider flexibility
+        // Physics: riders with lower flexibility need shallower concave for comfort
         let concave = 'Medium'; // Default
         
         const concaveByFlexibility = {
-            'low': 'Deep',      // Stiff preference = deeper concave for control
+            'low': 'Mellow',    // Low flexibility = shallow concave for comfort
             'medium': 'Medium', // Balanced
-            'high': 'Mellow'    // Flexible preference = shallow concave for comfort
+            'high': 'Deep'      // High flexibility = can handle deeper concave
         };
         
         concave = concaveByFlexibility[data.flexibility] || 'Medium';
@@ -318,11 +323,23 @@ class SkateboardCalculator {
             concave = concave === 'Deep' ? 'Medium' : 'Mellow'; // Cruising prioritizes comfort
         }
 
+        // Calculate construction based on board feel preference
+        let construction = '7-ply Maple'; // Default
+        
+        const constructionByFeel = {
+            'light': '7-ply Maple',           // Standard lightweight
+            'durable': '8-ply + Tech Laminate', // Stronger construction
+            'grippy': '7-ply + Grip Enhancement' // Standard with better grip
+        };
+        
+        construction = constructionByFeel[data.boardFeel] || '7-ply Maple';
+
         return {
             width: Math.round(baseWidth * 10) / 10,
             length: Math.round(baseLength * 10) / 10,
             wheelbase: Math.round(wheelbase * 10) / 10,
-            concave: concave
+            concave: concave,
+            construction: construction
         };
     }
 
@@ -362,17 +379,24 @@ class SkateboardCalculator {
             }
         }
 
-        // Calculate responsiveness based on flexibility preference
-        // Physics: more responsive trucks = quicker turning but less stable
+        // Calculate responsiveness based on rider flexibility and board feel
+        // Physics: less flexible riders need smoother, more forgiving setups
         let responsiveness = 'Standard'; // Default
         
         const responsivenessByFlexibility = {
-            'low': 'High',      // Stiff preference = high responsiveness
+            'low': 'Smooth',    // Low flexibility = smoother, more forgiving
             'medium': 'Standard', // Balanced
-            'high': 'Smooth'    // Flexible preference = smoother, less twitchy
+            'high': 'High'      // High flexibility = can handle quick response
         };
         
         responsiveness = responsivenessByFlexibility[data.flexibility] || 'Standard';
+        
+        // Adjust based on board feel preference
+        if (data.boardFeel === 'light') {
+            responsiveness = responsiveness === 'Smooth' ? 'Standard' : 'High';
+        } else if (data.boardFeel === 'grippy') {
+            responsiveness = responsiveness === 'High' ? 'Standard' : 'Smooth';
+        }
         
         // Adjust based on riding style
         if (data.ridingStyle === 'street') {
@@ -427,6 +451,18 @@ class SkateboardCalculator {
         if (data.weight > 80) hardness += 2; // Heavier riders need harder wheels
         if (data.weight < 60) hardness -= 2; // Lighter riders can use softer
 
+        // Adjust based on board feel preference
+        if (data.boardFeel === 'light') {
+            diameter -= 2; // Smaller wheels for lighter setup
+            hardness += 3; // Harder for less rolling resistance
+        } else if (data.boardFeel === 'grippy') {
+            hardness -= 8; // Much softer for grip (93-95A range)
+            if (diameter < 56) diameter += 2; // Slightly larger for better roll
+        } else if (data.boardFeel === 'durable') {
+            // Standard sizing but mid-range hardness for durability
+            hardness = Math.max(hardness - 2, 95); // Not too soft, not too hard
+        }
+
         // Calculate contact patch (affects grip and speed)
         const contactPatch = diameter < 60 ? 'Narrow' : diameter < 65 ? 'Medium' : 'Wide';
 
@@ -448,17 +484,44 @@ class SkateboardCalculator {
             bearingRating = 'ABEC 7';
         }
 
+        // Adjust bearing rating based on board feel
+        if (data.boardFeel === 'light') {
+            bearingRating = 'ABEC 7'; // Higher precision for performance
+        }
+
         // Hardware length calculation
         // Physics: must account for deck thickness + truck baseplate + riser (if any)
         let hardwareLength = '1"'; // Standard
+        let risers = 'None'; // Default
 
-        if (data.ridingStyle === 'cruising' || data.ridingStyle === 'longboard') {
-            hardwareLength = '1.25"'; // Longer for potential risers
+        // Determine risers based on board feel and wheel size
+        if (data.boardFeel === 'grippy') {
+            risers = '1/8" Soft'; // Slight lift for better feel
+            hardwareLength = '1.25"';
+        } else if (data.ridingStyle === 'cruising' || data.ridingStyle === 'longboard') {
+            risers = '1/4" Standard'; // More clearance for larger wheels
+            hardwareLength = '1.5"';
+        } else if (data.boardFeel === 'durable') {
+            risers = '1/8" Hard'; // Protection without too much lift
+            hardwareLength = '1.25"';
+        }
+
+        // Calculate approximate setup weight
+        let setupWeight = 'Medium'; // Default
+        
+        if (data.boardFeel === 'light') {
+            setupWeight = 'Light (2.8-3.2 lbs)';
+        } else if (data.boardFeel === 'durable') {
+            setupWeight = 'Heavy (3.5-4.0 lbs)';
+        } else {
+            setupWeight = 'Medium (3.0-3.5 lbs)';
         }
 
         return {
             bearingRating: bearingRating,
-            hardwareLength: hardwareLength
+            hardwareLength: hardwareLength,
+            risers: risers,
+            setupWeight: setupWeight
         };
     }
 
@@ -467,6 +530,7 @@ class SkateboardCalculator {
         document.getElementById('deck-length').textContent = `${specs.length}"`;
         document.getElementById('wheelbase').textContent = `${specs.wheelbase}"`;
         document.getElementById('deck-concave').textContent = specs.concave;
+        document.getElementById('deck-construction').textContent = specs.construction;
 
         const explanation = this.getDeckExplanation(specs, data);
         document.getElementById('deck-explanation').textContent = explanation;
@@ -494,6 +558,8 @@ class SkateboardCalculator {
     updateHardwareResults(specs, data) {
         document.getElementById('bearing-rating').textContent = specs.bearingRating;
         document.getElementById('hardware-length').textContent = specs.hardwareLength;
+        document.getElementById('risers').textContent = specs.risers;
+        document.getElementById('setup-weight').textContent = specs.setupWeight;
 
         const explanation = this.getHardwareExplanation(specs, data);
         document.getElementById('bearing-explanation').textContent = explanation;
@@ -543,7 +609,17 @@ class SkateboardCalculator {
     }
 
     getHardwareExplanation(specs, data) {
-        return `${specs.bearingRating} bearings provide good performance for your riding style. ${specs.hardwareLength} hardware ensures proper assembly.`;
+        let explanation = `${specs.bearingRating} bearings provide good performance for your riding style. `;
+        explanation += `${specs.hardwareLength} hardware with ${specs.risers.toLowerCase()} risers. `;
+        
+        const boardFeelExplanations = {
+            'light': 'Lightweight setup prioritizes agility and easy handling.',
+            'durable': 'Durable construction built for strength and longevity.',
+            'grippy': 'Grippy setup optimized for traction and control.'
+        };
+        explanation += boardFeelExplanations[data.boardFeel];
+        
+        return explanation;
     }
 
     updatePhysicsExplanation(data, deckSpecs, truckSpecs, wheelSpecs) {
@@ -580,11 +656,19 @@ class SkateboardCalculator {
 
         // Flexibility consideration
         const flexibilityExplanations = {
-            'low': 'Stiff setup with deep concave and high responsiveness for maximum control and feedback.',
-            'medium': 'Balanced flexibility providing good control while maintaining comfort.',
-            'high': 'Flexible setup with mellow concave and smooth responsiveness for comfort and forgiveness.'
+            'low': 'Setup accommodates limited flexibility with mellow concave and smooth responsiveness for comfort.',
+            'medium': 'Balanced setup works well with average flexibility for good control and comfort.',
+            'high': 'Setup takes advantage of high flexibility with deeper concave and responsive trucks for maximum control.'
         };
-        explanations.push(`<strong>Flexibility Tuning:</strong> ${flexibilityExplanations[data.flexibility]}`);
+        explanations.push(`<strong>Flexibility Accommodation:</strong> ${flexibilityExplanations[data.flexibility]}`);
+
+        // Board feel consideration
+        const boardFeelExplanations = {
+            'light': 'Lightweight configuration with smaller wheels and minimal extras for maximum agility.',
+            'durable': 'Reinforced construction with protective elements for longevity and heavy use.',
+            'grippy': 'Grip-focused setup with softer wheels and enhanced traction components.'
+        };
+        explanations.push(`<strong>Board Feel Optimization:</strong> ${boardFeelExplanations[data.boardFeel]}`);
 
         document.getElementById('physics-explanation').innerHTML = explanations.join('<br><br>');
     }
