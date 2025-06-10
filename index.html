@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skateboard Right-Sizing Calculator</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🛹 Skateboard Right-Sizing Calculator</h1>
+            <p>Find your perfect skateboard setup based on physics, geometry, and your riding style</p>
+        </header>
+
+        <main class="main-content">
+            <form id="skateboard-form" class="form-container">
+                <!-- Personal Information Section -->
+                <section class="form-section">
+                    <h2>Personal Information</h2>
+                    
+                    <div class="input-group">
+                        <label for="height">Height (cm)</label>
+                        <input type="number" id="height" name="height" min="120" max="220" step="1" required>
+                        <div class="tooltip" data-tooltip="Your height affects deck length and wheelbase for optimal balance">ℹ️</div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="weight">Weight (kg)</label>
+                        <input type="number" id="weight" name="weight" min="30" max="150" step="1" required>
+                        <div class="tooltip" data-tooltip="Weight determines truck strength and wheel hardness needed">ℹ️</div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="shoe-size">Shoe Size (EU)</label>
+                        <input type="number" id="shoe-size" name="shoeSize" min="35" max="50" step="0.5" required>
+                        <div class="tooltip" data-tooltip="Shoe size helps determine optimal deck width for foot placement">ℹ️</div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="experience">Experience Level</label>
+                        <select id="experience" name="experience" required>
+                            <option value="">Select your level</option>
+                            <option value="beginner">Beginner (0-6 months)</option>
+                            <option value="intermediate">Intermediate (6 months - 2 years)</option>
+                            <option value="advanced">Advanced (2+ years)</option>
+                        </select>
+                        <div class="tooltip" data-tooltip="Experience affects stability vs maneuverability preferences">ℹ️</div>
+                    </div>
+                </section>
+
+                <!-- Riding Style Section -->
+                <section class="form-section">
+                    <h2>Riding Style & Preferences</h2>
+                    
+                    <div class="input-group">
+                        <label for="riding-style">Primary Riding Style</label>
+                        <select id="riding-style" name="ridingStyle" required>
+                            <option value="">Select your style</option>
+                            <option value="street">Street (tricks, rails, stairs)</option>
+                            <option value="park">Park/Bowl (ramps, transitions)</option>
+                            <option value="cruising">Cruising/Transportation</option>
+                            <option value="longboard">Longboard/Downhill</option>
+                            <option value="mixed">Mixed/All-around</option>
+                        </select>
+                        <div class="tooltip" data-tooltip="Different styles require different board geometries for optimal performance">ℹ️</div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="terrain">Primary Terrain</label>
+                        <select id="terrain" name="terrain" required>
+                            <option value="">Select terrain</option>
+                            <option value="smooth">Smooth surfaces (skate parks, indoor)</option>
+                            <option value="rough">Rough surfaces (streets, sidewalks)</option>
+                            <option value="mixed">Mixed terrain</option>
+                        </select>
+                        <div class="tooltip" data-tooltip="Terrain affects wheel size and hardness recommendations">ℹ️</div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="stability-preference">Stability vs Maneuverability</label>
+                        <input type="range" id="stability-preference" name="stabilityPreference" min="1" max="10" value="5" step="1">
+                        <div class="range-labels">
+                            <span>More Stable</span>
+                            <span>More Maneuverable</span>
+                        </div>
+                        <div class="tooltip" data-tooltip="Affects wheelbase length and truck tightness recommendations">ℹ️</div>
+                    </div>
+                </section>
+            </form>
+
+            <!-- Results Section -->
+            <section class="results-container" id="results-container">
+                <h2>Your Recommended Setup</h2>
+                
+                <div class="results-grid">
+                    <div class="result-card">
+                        <h3>🛹 Deck</h3>
+                        <div class="spec-item">
+                            <span class="spec-label">Width:</span>
+                            <span class="spec-value" id="deck-width">-</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Length:</span>
+                            <span class="spec-value" id="deck-length">-</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Wheelbase:</span>
+                            <span class="spec-value" id="wheelbase">-</span>
+                        </div>
+                        <div class="explanation" id="deck-explanation"></div>
+                    </div>
+
+                    <div class="result-card">
+                        <h3>🔧 Trucks</h3>
+                        <div class="spec-item">
+                            <span class="spec-label">Width:</span>
+                            <span class="spec-value" id="truck-width">-</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Height:</span>
+                            <span class="spec-value" id="truck-height">-</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Tightness:</span>
+                            <span class="spec-value" id="truck-tightness">-</span>
+                        </div>
+                        <div class="explanation" id="truck-explanation"></div>
+                    </div>
+
+                    <div class="result-card">
+                        <h3>⚪ Wheels</h3>
+                        <div class="spec-item">
+                            <span class="spec-label">Diameter:</span>
+                            <span class="spec-value" id="wheel-diameter">-</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Hardness:</span>
+                            <span class="spec-value" id="wheel-hardness">-</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Contact Patch:</span>
+                            <span class="spec-value" id="wheel-contact">-</span>
+                        </div>
+                        <div class="explanation" id="wheel-explanation"></div>
+                    </div>
+
+                    <div class="result-card">
+                        <h3>⚙️ Bearings & Hardware</h3>
+                        <div class="spec-item">
+                            <span class="spec-label">Bearing Rating:</span>
+                            <span class="spec-value" id="bearing-rating">-</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Hardware Length:</span>
+                            <span class="spec-value" id="hardware-length">-</span>
+                        </div>
+                        <div class="explanation" id="bearing-explanation"></div>
+                    </div>
+                </div>
+
+                <div class="physics-explanation">
+                    <h3>🔬 The Science Behind Your Setup</h3>
+                    <div id="physics-explanation"></div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>Built with physics, geometry, and love for skateboarding 🛹</p>
+            <p><small>Recommendations based on biomechanics and skateboard physics principles</small></p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
