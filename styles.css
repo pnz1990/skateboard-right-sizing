@@ -70,6 +70,8 @@ body::before {
     box-shadow: 0 20px 40px rgba(0,0,0,0.15);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
+    max-width: 100%;
+    overflow: hidden; /* Prevent any overflow */
 }
 
 .form-section {
@@ -88,6 +90,7 @@ body::before {
 .input-group {
     position: relative;
     margin-bottom: 20px;
+    padding-right: 35px; /* Add space for tooltip */
 }
 
 .input-group label {
@@ -96,6 +99,7 @@ body::before {
     font-weight: 500;
     color: #4a5568;
     font-size: 0.95rem;
+    padding-right: 25px; /* Prevent overlap with tooltip */
 }
 
 .input-group input,
@@ -107,6 +111,7 @@ body::before {
     font-size: 1rem;
     transition: all 0.3s ease;
     background: white;
+    box-sizing: border-box;
 }
 
 .input-group input:focus,
@@ -156,18 +161,23 @@ body::before {
 .tooltip {
     position: absolute;
     right: 10px;
-    top: 35px;
+    top: 8px; /* Adjusted to align with label */
     cursor: help;
     font-size: 1.2rem;
     color: #667eea;
     z-index: 10;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .tooltip:hover::after {
     content: attr(data-tooltip);
     position: absolute;
-    right: 0;
-    top: 25px;
+    right: 25px; /* Moved further right to avoid overlap */
+    top: -5px;
     background: #2d3748;
     color: white;
     padding: 8px 12px;
@@ -184,10 +194,10 @@ body::before {
 .tooltip:hover::before {
     content: '';
     position: absolute;
-    right: 10px;
-    top: 20px;
+    right: 20px;
+    top: 10px;
     border: 5px solid transparent;
-    border-bottom-color: #2d3748;
+    border-right-color: #2d3748;
     z-index: 1001;
 }
 
@@ -369,15 +379,18 @@ body::before {
 .input-with-unit {
     display: flex;
     gap: 8px;
+    align-items: center;
 }
 
 .input-with-unit input {
-    flex: 1;
+    flex: 2;
+    min-width: 0; /* Prevent overflow */
 }
 
 .unit-selector {
-    min-width: 80px;
-    flex-shrink: 0;
+    flex: 1;
+    min-width: 60px;
+    max-width: 80px;
 }
 
 .height-inputs {
@@ -392,6 +405,7 @@ body::before {
     border: 2px solid #e2e8f0;
     border-radius: 6px;
     font-size: 0.9rem;
+    min-width: 0; /* Prevent overflow */
 }
 
 .height-inputs input:focus {
@@ -414,6 +428,7 @@ body::before {
 
 .shoe-size-selectors select {
     flex: 1;
+    min-width: 0; /* Prevent overflow */
 }
 
 #shoe-size {
@@ -422,22 +437,43 @@ body::before {
 
 /* Responsive adjustments for new inputs */
 @media (max-width: 480px) {
+    .input-group {
+        padding-right: 30px; /* Slightly less padding on mobile */
+    }
+    
     .input-with-unit {
-        flex-direction: column;
-        gap: 8px;
+        flex-direction: row; /* Keep horizontal on mobile for better UX */
+        gap: 6px;
+    }
+    
+    .input-with-unit input {
+        flex: 3; /* Give more space to input */
+        min-width: 80px;
     }
     
     .unit-selector {
-        min-width: auto;
+        flex: 1;
+        min-width: 50px;
+        max-width: 70px;
     }
     
     .shoe-size-selectors {
-        flex-direction: column;
-        gap: 8px;
+        gap: 6px;
     }
     
     .height-inputs {
         gap: 6px;
+    }
+    
+    .tooltip {
+        right: 5px;
+        font-size: 1.1rem;
+    }
+    
+    .tooltip:hover::after {
+        right: 20px;
+        width: 200px;
+        font-size: 0.8rem;
     }
 }
 @media (max-width: 768px) {
