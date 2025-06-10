@@ -200,6 +200,7 @@ class SkateboardCalculator {
         document.getElementById('truck-height').textContent = '--';
         document.getElementById('truck-tightness').textContent = '--';
         document.getElementById('truck-responsiveness').textContent = '--';
+        document.getElementById('truck-bushings').textContent = '--';
         document.getElementById('wheel-diameter').textContent = '--';
         document.getElementById('wheel-hardness').textContent = '--';
         document.getElementById('wheel-contact').textContent = '--';
@@ -242,7 +243,7 @@ class SkateboardCalculator {
         this.updateWheelResults(wheelSpecs, data);
 
         // Calculate bearing and hardware specs
-        const hardwareSpecs = this.calculateHardwareSpecs(data, deckSpecs);
+        const hardwareSpecs = this.calculateHardwareSpecs(data, deckSpecs, wheelSpecs);
         this.updateHardwareResults(hardwareSpecs, data);
 
         // Generate physics explanation
@@ -256,154 +257,148 @@ class SkateboardCalculator {
     }
 
     calculateDeckSpecs(data) {
-        // Physics-based deck width calculation
-        // Based on shoe size and biomechanics research
-        const shoeToWidthRatio = {
-            35: 7.5, 36: 7.6, 37: 7.7, 38: 7.8, 39: 7.9, 40: 8.0,
-            41: 8.1, 42: 8.2, 43: 8.3, 44: 8.4, 45: 8.5, 46: 8.6,
-            47: 8.7, 48: 8.8, 49: 8.9, 50: 9.0
-        };
-
-        let baseWidth = shoeToWidthRatio[Math.round(data.shoeSize)] || 8.0;
-
-        // Adjust for riding style
-        const styleAdjustments = {
-            'street': -0.1,      // Narrower for flip tricks
-            'park': 0.1,         // Wider for stability
-            'cruising': 0.2,     // Much wider for comfort
-            'longboard': 0.5,    // Significantly wider
-            'mixed': 0.0         // No adjustment
-        };
-
-        baseWidth += styleAdjustments[data.ridingStyle] || 0;
-
-        // Adjust for experience (beginners need more stability)
-        if (data.experience === 'beginner') baseWidth += 0.2;
-        if (data.experience === 'comfortable') baseWidth += 0.05;
-        if (data.experience === 'advanced') baseWidth -= 0.1;
-
-        // Calculate length based on height and riding style
-        // Using biomechanical proportions
-        let baseLength = (data.height * 0.18) + 10; // Base formula
-
-        const lengthAdjustments = {
-            'street': -2,        // Shorter for maneuverability
-            'park': 0,           // Standard length
-            'cruising': 3,       // Longer for stability
-            'longboard': 15,     // Much longer
-            'mixed': 1           // Slightly longer
-        };
-
-        baseLength += lengthAdjustments[data.ridingStyle] || 0;
-
-        // Calculate wheelbase (affects stability vs maneuverability)
-        // Physics: longer wheelbase = more stable, shorter = more maneuverable
-        let wheelbase = baseLength * 0.65; // Standard ratio
-
-        // Adjust based on stability preference (1-10 scale)
-        const stabilityFactor = (data.stabilityPreference - 5) * 0.5;
-        wheelbase += stabilityFactor;
-
-        // Calculate concave based on rider flexibility
-        // Physics: riders with lower flexibility need shallower concave for comfort
-        let concave = 'Medium'; // Default
+        // Base width from shoe size (convert to US first)
+        const shoeSizeUS = this.convertToUSShoeSize(data.shoeSize, data.shoeRegion, data.shoeGender);
         
-        const concaveByFlexibility = {
-            'low': 'Mellow',    // Low flexibility = shallow concave for comfort
-            'medium': 'Medium', // Balanced
-            'high': 'Deep'      // High flexibility = can handle deeper concave
-        };
-        
-        concave = concaveByFlexibility[data.flexibility] || 'Medium';
-        
-        // Adjust concave based on riding style
-        if (data.ridingStyle === 'street') {
-            concave = concave === 'Mellow' ? 'Medium' : 'Deep'; // Street needs more control
-        } else if (data.ridingStyle === 'cruising') {
-            concave = concave === 'Deep' ? 'Medium' : 'Mellow'; // Cruising prioritizes comfort
+        let baseWidth = 8.0; // Default
+        if (shoeSizeUS <= 7.5) {
+            baseWidth = 7.875; // 7.75-8.0 range, choose middle-high
+        } else if (shoeSizeUS >= 8 && shoeSizeUS <= 9.5) {
+            baseWidth = 8.25; // 8.0-8.5 range, choose middle
+        } else if (shoeSizeUS >= 10) {
+            baseWidth = 9.0; // 8.5-9.5 range, choose middle
         }
 
-        // Calculate construction based on board feel preference
-        let construction = '7-ply Maple'; // Default
-        
-        const constructionByFeel = {
-            'light': '7-ply Maple',           // Standard lightweight
-            'durable': '8-ply + Tech Laminate', // Stronger construction
-            'grippy': '7-ply + Grip Enhancement' // Standard with better grip
+        // Add height adjustment
+        if (data.height >= 163 && data.height <= 180) {
+            baseWidth += 0.25;
+        } else if (data.height > 180) {
+            baseWidth += 0.5;
+        }
+
+        // Style adjustment
+        const styleAdjustments = {
+            'street': -0.25,
+            'park': 0,
+            'cruising': 0.5,
+            'longboard': 0.5,
+            'mixed': 0
         };
-        
-        construction = constructionByFeel[data.boardFeel] || '7-ply Maple';
+        baseWidth += styleAdjustments[data.ridingStyle] || 0;
+
+        // Clamp to valid range
+        const deckWidth = Math.max(7.75, Math.min(10.0, baseWidth));
+
+        // Calculate wheelbase and length based on style
+        let wheelbase, deckLength;
+        switch (data.ridingStyle) {
+            case 'street':
+                wheelbase = 13.5; // 13-14" range
+                deckLength = wheelbase + 18; // ~31.5"
+                break;
+            case 'park':
+            case 'mixed':
+                wheelbase = 14.25; // 14-14.5" range
+                deckLength = wheelbase + 18; // ~32.25"
+                break;
+            case 'cruising':
+            case 'longboard':
+                wheelbase = 15.0; // 14.5-15.5" range
+                deckLength = wheelbase + 20; // ~35"
+                break;
+            default:
+                wheelbase = 14.0;
+                deckLength = 32.0;
+        }
+
+        // Concave based on rider flexibility
+        const concaveByFlexibility = {
+            'low': 'Mellow',    // Low flexibility = shallow for comfort
+            'medium': 'Medium',
+            'high': 'Deep'      // High flexibility = deep for tech tricks
+        };
+        const concave = concaveByFlexibility[data.flexibility] || 'Medium';
+
+        // Construction based on board feel and weight
+        let construction = '7-ply Maple';
+        if (data.boardFeel === 'durable' || data.weight > 100) {
+            construction = 'Reinforced 7-ply';
+        }
 
         return {
-            width: Math.round(baseWidth * 10) / 10,
-            length: Math.round(baseLength * 10) / 10,
+            width: Math.round(deckWidth * 8) / 8, // Round to nearest 1/8"
+            length: Math.round(deckLength * 10) / 10,
             wheelbase: Math.round(wheelbase * 10) / 10,
             concave: concave,
             construction: construction
         };
     }
 
+    // Helper method to convert shoe sizes to US
+    convertToUSShoeSize(sizeEU, region, gender) {
+        // Convert from EU to US (our base calculation uses US sizes)
+        const conversions = {
+            'EU': { 'M': (eu) => eu - 33, 'W': (eu) => eu - 31 },
+            'US': { 'M': (us) => us, 'W': (us) => us },
+            'UK': { 'M': (uk) => uk + 0.5, 'W': (uk) => uk + 2 },
+            'AU': { 'M': (au) => au + 0.5, 'W': (au) => au + 2 },
+            'CN': { 'M': (cn) => (cn - 18) - 33, 'W': (cn) => (cn - 18) - 31 },
+            'JP': { 'M': (jp) => (jp - 18) - 33, 'W': (jp) => (jp - 18) - 31 },
+            'BR': { 'M': (br) => (br + 4) - 33, 'W': (br) => (br + 2) - 31 }
+        };
+
+        if (conversions[region] && conversions[region][gender]) {
+            return conversions[region][gender](sizeEU);
+        }
+        return sizeEU - 33; // Default to EU men's conversion
+    }
+
     calculateTruckSpecs(data, deckSpecs) {
-        // Truck width should match deck width for optimal performance
-        // Physics: truck width affects turning radius and stability
+        // Axle width should be approximately deck width ±0.125"
         const truckWidth = deckSpecs.width;
 
-        // Calculate truck height based on wheel size and riding style
+        // Height based on riding style
         let truckHeight = 'Mid'; // Default
-
-        if (data.ridingStyle === 'cruising' || data.ridingStyle === 'longboard') {
-            truckHeight = 'High'; // Need clearance for larger wheels
-        } else if (data.ridingStyle === 'street') {
-            truckHeight = 'Low'; // Lower center of gravity for tricks
+        switch (data.ridingStyle) {
+            case 'street':
+                truckHeight = 'Low';
+                break;
+            case 'park':
+            case 'mixed':
+                truckHeight = 'Mid';
+                break;
+            case 'cruising':
+            case 'longboard':
+                truckHeight = 'High';
+                break;
         }
 
-        // Calculate recommended tightness based on weight and preference
-        // Physics: heavier riders need tighter trucks for control
+        // Tightness based on stability rating (1-10 scale)
+        // Response = 11 - stabilityRating
+        const responseLevel = 11 - data.stabilityPreference;
         let tightness = 'Medium';
         
-        if (data.weight > 80) {
-            tightness = data.stabilityPreference > 6 ? 'Medium-Tight' : 'Tight';
-        } else if (data.weight < 60) {
-            tightness = data.stabilityPreference < 4 ? 'Loose' : 'Medium-Loose';
+        if (responseLevel <= 3) {
+            tightness = 'Loose';
+        } else if (responseLevel <= 5) {
+            tightness = 'Medium-Loose';
+        } else if (responseLevel <= 7) {
+            tightness = 'Medium';
+        } else if (responseLevel <= 9) {
+            tightness = 'Medium-Tight';
         } else {
-            if (data.stabilityPreference > 7) tightness = 'Medium-Tight';
-            if (data.stabilityPreference < 3) tightness = 'Medium-Loose';
+            tightness = 'Tight';
         }
 
-        // Adjust for experience
-        if (data.experience === 'beginner') {
-            tightness = tightness.includes('Loose') ? 'Medium' : tightness;
-        } else if (data.experience === 'advanced') {
-            if (tightness === 'Medium' && data.stabilityPreference < 5) {
-                tightness = 'Medium-Loose';
-            }
-        }
-
-        // Calculate responsiveness based on rider flexibility and board feel
-        // Physics: less flexible riders need smoother, more forgiving setups
-        let responsiveness = 'Standard'; // Default
-        
-        const responsivenessByFlexibility = {
-            'low': 'Smooth',    // Low flexibility = smoother, more forgiving
-            'medium': 'Standard', // Balanced
-            'high': 'High'      // High flexibility = can handle quick response
+        // Responsiveness is inverted tightness
+        const responsivenessMap = {
+            'Loose': 'High',
+            'Medium-Loose': 'Medium-High',
+            'Medium': 'Standard',
+            'Medium-Tight': 'Medium-Low',
+            'Tight': 'Low'
         };
-        
-        responsiveness = responsivenessByFlexibility[data.flexibility] || 'Standard';
-        
-        // Adjust based on board feel preference
-        if (data.boardFeel === 'light') {
-            responsiveness = responsiveness === 'Smooth' ? 'Standard' : 'High';
-        } else if (data.boardFeel === 'grippy') {
-            responsiveness = responsiveness === 'High' ? 'Standard' : 'Smooth';
-        }
-        
-        // Adjust based on riding style
-        if (data.ridingStyle === 'street') {
-            responsiveness = responsiveness === 'Smooth' ? 'Standard' : 'High';
-        } else if (data.ridingStyle === 'cruising' || data.ridingStyle === 'longboard') {
-            responsiveness = responsiveness === 'High' ? 'Standard' : 'Smooth';
-        }
+        const responsiveness = responsivenessMap[tightness] || 'Standard';
 
         return {
             width: truckWidth,
@@ -414,114 +409,125 @@ class SkateboardCalculator {
     }
 
     calculateWheelSpecs(data) {
-        // Wheel diameter calculation based on riding style and terrain
-        // Physics: larger wheels = faster, smoother ride; smaller = more responsive
-        let diameter = 54; // Default street size
-
-        const diameterByStyle = {
-            'street': 52,        // Small for tricks
-            'park': 56,          // Medium for transitions
-            'cruising': 60,      // Large for smooth ride
-            'longboard': 70,     // Very large for speed
-            'mixed': 55          // Versatile size
-        };
-
-        diameter = diameterByStyle[data.ridingStyle] || 54;
-
-        // Adjust for terrain
-        if (data.terrain === 'rough') diameter += 4;
-        if (data.terrain === 'smooth') diameter -= 2;
-
-        // Calculate hardness (durometer) based on weight, style, and terrain
-        // Physics: harder wheels = faster, less grip; softer = more grip, smoother
-        let hardness = 99; // Default street hardness
-
-        const hardnessByStyle = {
-            'street': 99,        // Hard for tricks
-            'park': 97,          // Slightly softer for grip
-            'cruising': 85,      // Soft for comfort
-            'longboard': 80,     // Very soft for grip and comfort
-            'mixed': 92          // Medium hardness
-        };
-
-        hardness = hardnessByStyle[data.ridingStyle] || 99;
-
-        // Adjust for terrain and weight
-        if (data.terrain === 'rough') hardness -= 5;
-        if (data.weight > 80) hardness += 2; // Heavier riders need harder wheels
-        if (data.weight < 60) hardness -= 2; // Lighter riders can use softer
-
-        // Adjust based on board feel preference
-        if (data.boardFeel === 'light') {
-            diameter -= 2; // Smaller wheels for lighter setup
-            hardness += 3; // Harder for less rolling resistance
-        } else if (data.boardFeel === 'grippy') {
-            hardness -= 8; // Much softer for grip (93-95A range)
-            if (diameter < 56) diameter += 2; // Slightly larger for better roll
-        } else if (data.boardFeel === 'durable') {
-            // Standard sizing but mid-range hardness for durability
-            hardness = Math.max(hardness - 2, 95); // Not too soft, not too hard
+        // Diameter based on riding style
+        let diameter = 54; // Default
+        switch (data.ridingStyle) {
+            case 'street':
+                diameter = 54; // 52-56mm range, choose middle-high
+                break;
+            case 'park':
+                diameter = 58; // 56-60mm range, choose middle
+                break;
+            case 'cruising':
+            case 'longboard':
+                diameter = 62; // 60-65mm range, choose middle
+                break;
+            case 'mixed':
+                diameter = 56; // Versatile size
+                break;
         }
 
-        // Calculate contact patch (affects grip and speed)
-        const contactPatch = diameter < 60 ? 'Narrow' : diameter < 65 ? 'Medium' : 'Wide';
+        // Hardness (Durometer) based on surface type
+        let hardness = 99; // Default
+        switch (data.terrain) {
+            case 'smooth':
+                hardness = 100; // 99-101A range
+                break;
+            case 'rough':
+                hardness = 95; // 93-97A range
+                break;
+            case 'mixed':
+                hardness = 97; // Average of smooth and rough
+                break;
+        }
+
+        // Board feel adjustments
+        if (data.boardFeel === 'light') {
+            diameter -= 2; // Smaller for lighter setup
+            hardness += 2; // Harder for less rolling resistance
+        } else if (data.boardFeel === 'grippy') {
+            hardness = Math.max(93, hardness - 5); // Much softer for grip (93-95A)
+        } else if (data.boardFeel === 'durable') {
+            // Standard sizing, balanced hardness
+            hardness = Math.max(95, Math.min(99, hardness));
+        }
+
+        // Shape based on riding style
+        let shape = 'Mid-profile';
+        switch (data.ridingStyle) {
+            case 'street':
+                shape = 'Narrow/Conical';
+                break;
+            case 'park':
+            case 'mixed':
+                shape = 'Mid-profile';
+                break;
+            case 'cruising':
+            case 'longboard':
+                shape = 'Wide/Stability';
+                break;
+        }
+
+        // Ensure hardness is in valid range
+        hardness = Math.max(78, Math.min(101, hardness));
 
         return {
             diameter: Math.round(diameter),
-            hardness: Math.max(78, Math.min(101, hardness)) + 'A',
-            contactPatch: contactPatch
+            hardness: hardness + 'A',
+            contactPatch: shape
         };
     }
 
-    calculateHardwareSpecs(data, deckSpecs) {
-        // Bearing rating based on riding style and experience
-        let bearingRating = 'ABEC 5'; // Standard rating
-
-        if (data.ridingStyle === 'longboard' || data.ridingStyle === 'cruising') {
-            bearingRating = 'ABEC 7'; // Higher precision for speed
-        }
+    calculateHardwareSpecs(data, deckSpecs, wheelSpecs) {
+        // Bearings - Standard ABEC-5+ good quality
+        let bearingRating = 'ABEC 5';
         if (data.experience === 'comfortable' || data.experience === 'advanced') {
             bearingRating = 'ABEC 7';
         }
-
-        // Adjust bearing rating based on board feel
         if (data.boardFeel === 'light') {
             bearingRating = 'ABEC 7'; // Higher precision for performance
         }
 
-        // Hardware length calculation
-        // Physics: must account for deck thickness + truck baseplate + riser (if any)
-        let hardwareLength = '1"'; // Standard
-        let risers = 'None'; // Default
+        // Risers based on wheel size and board feel
+        let risers = 'None';
+        let hardwareLength = '7/8"';
 
-        // Determine risers based on board feel and wheel size
-        if (data.boardFeel === 'grippy') {
-            risers = '1/8" Soft'; // Slight lift for better feel
-            hardwareLength = '1.25"';
-        } else if (data.ridingStyle === 'cruising' || data.ridingStyle === 'longboard') {
-            risers = '1/4" Standard'; // More clearance for larger wheels
-            hardwareLength = '1.5"';
-        } else if (data.boardFeel === 'durable') {
-            risers = '1/8" Hard'; // Protection without too much lift
-            hardwareLength = '1.25"';
+        if (wheelSpecs.diameter > 56) {
+            risers = '1/4" Standard';
+            hardwareLength = '1 1/8"';
+        } else if (data.boardFeel === 'durable' || data.weight > 100) {
+            risers = '1/8" Hard';
+            hardwareLength = '1"';
+        } else if (data.boardFeel === 'grippy') {
+            risers = '1/8" Soft';
+            hardwareLength = '1"';
         }
 
-        // Calculate approximate setup weight
-        let setupWeight = 'Medium'; // Default
+        // Calculate bushings durometer based on weight and stability preference
+        let bushingDurometer = '90A'; // Default
         
+        if (data.weight < 75 && data.stabilityPreference >= 7) {
+            bushingDurometer = '87A'; // Light weight + maneuverable
+        } else if (data.weight >= 75 && data.weight <= 100) {
+            bushingDurometer = '91A'; // Medium weight, balanced
+        } else if (data.weight > 100 || data.stabilityPreference <= 4) {
+            bushingDurometer = '94A'; // Heavy weight or stability need
+        }
+
+        // Estimate setup weight based on components
+        let setupWeight = 'Medium (3.0-3.5 lbs)';
         if (data.boardFeel === 'light') {
-            setupWeight = 'Light (2.8-3.2 lbs)';
+            setupWeight = 'Light (2.6-3.0 lbs)';
         } else if (data.boardFeel === 'durable') {
-            setupWeight = 'Heavy (3.5-4.0 lbs)';
-        } else {
-            setupWeight = 'Medium (3.0-3.5 lbs)';
+            setupWeight = 'Heavy (3.5-4.2 lbs)';
         }
 
         return {
             bearingRating: bearingRating,
             hardwareLength: hardwareLength,
             risers: risers,
-            setupWeight: setupWeight
+            setupWeight: setupWeight,
+            bushingDurometer: bushingDurometer
         };
     }
 
@@ -560,6 +566,7 @@ class SkateboardCalculator {
         document.getElementById('hardware-length').textContent = specs.hardwareLength;
         document.getElementById('risers').textContent = specs.risers;
         document.getElementById('setup-weight').textContent = specs.setupWeight;
+        document.getElementById('truck-bushings').textContent = specs.bushingDurometer;
 
         const explanation = this.getHardwareExplanation(specs, data);
         document.getElementById('bearing-explanation').textContent = explanation;
@@ -625,48 +632,35 @@ class SkateboardCalculator {
     updatePhysicsExplanation(data, deckSpecs, truckSpecs, wheelSpecs) {
         const explanations = [];
 
-        // Center of gravity explanation
-        explanations.push(`<strong>Center of Gravity:</strong> Your ${deckSpecs.width}" deck width lowers your center of gravity relative to your shoe size, improving balance and control.`);
+        // Deck sizing explanation
+        explanations.push(`<strong>Deck Sizing Algorithm:</strong> Width ${deckSpecs.width}" calculated from shoe size with height and style adjustments. Industry-standard wheelbase ${deckSpecs.wheelbase}" optimized for ${data.ridingStyle} riding.`);
 
-        // Moment of inertia explanation
-        explanations.push(`<strong>Rotational Physics:</strong> The ${deckSpecs.wheelbase}" wheelbase creates optimal moment of inertia - longer for stability, shorter for quick turns.`);
+        // Truck setup explanation
+        const responseLevel = 11 - data.stabilityPreference;
+        explanations.push(`<strong>Truck Configuration:</strong> ${truckSpecs.height} height trucks with ${truckSpecs.tightness.toLowerCase()} setup (response level ${responseLevel}/10) for optimal turning characteristics.`);
 
-        // Rolling resistance
-        explanations.push(`<strong>Rolling Dynamics:</strong> ${wheelSpecs.diameter}mm wheels with ${wheelSpecs.hardness} hardness minimize rolling resistance while maximizing grip for your terrain.`);
+        // Wheel specifications
+        explanations.push(`<strong>Wheel Selection:</strong> ${wheelSpecs.diameter}mm diameter with ${wheelSpecs.hardness} hardness optimized for ${data.terrain} surfaces and ${data.ridingStyle} style.`);
 
-        // Weight distribution with converted units
+        // Weight and biomechanics
         const weightDisplay = data.weightUnit === 'kg' ? `${Math.round(data.weight)}kg` : `${Math.round(data.weight * 2.20462)}lbs`;
-        if (data.weight > 80) {
-            explanations.push(`<strong>Load Distribution:</strong> Your weight (${weightDisplay}) requires ${truckSpecs.tightness.toLowerCase()} trucks to maintain proper load distribution and prevent speed wobbles.`);
-        }
-
-        // Biomechanics with converted units
         const heightDisplay = data.heightUnit === 'cm' ? `${Math.round(data.height)}cm` : 
             `${Math.floor(data.height / 30.48)}'${Math.round((data.height % 30.48) / 2.54)}"`;
-        explanations.push(`<strong>Biomechanics:</strong> Setup optimized for your height (${heightDisplay}) ensures natural stance width and efficient power transfer.`);
+        explanations.push(`<strong>Biomechanical Fit:</strong> Setup scaled for ${heightDisplay} height and ${weightDisplay} weight using proven skateboard industry ratios.`);
 
-        // Experience level consideration
-        const experienceExplanations = {
-            'beginner': 'Setup prioritizes stability and forgiveness to build confidence.',
-            'comfortable': 'Balanced setup allows progression while maintaining control.',
-            'intermediate': 'Setup fine-tuned for your developed preferences and skills.',
-            'advanced': 'Performance-oriented setup maximizes responsiveness and precision.'
-        };
-        explanations.push(`<strong>Experience Factor:</strong> ${experienceExplanations[data.experience]}`);
-
-        // Flexibility consideration
+        // Flexibility accommodation
         const flexibilityExplanations = {
-            'low': 'Setup accommodates limited flexibility with mellow concave and smooth responsiveness for comfort.',
-            'medium': 'Balanced setup works well with average flexibility for good control and comfort.',
-            'high': 'Setup takes advantage of high flexibility with deeper concave and responsive trucks for maximum control.'
+            'low': 'Setup accommodates limited flexibility with mellow concave and forgiving truck response.',
+            'medium': 'Balanced configuration works well with average flexibility for versatile performance.',
+            'high': 'Setup leverages high flexibility with deeper concave and responsive trucks for technical control.'
         };
         explanations.push(`<strong>Flexibility Accommodation:</strong> ${flexibilityExplanations[data.flexibility]}`);
 
-        // Board feel consideration
+        // Board feel optimization
         const boardFeelExplanations = {
-            'light': 'Lightweight configuration with smaller wheels and minimal extras for maximum agility.',
-            'durable': 'Reinforced construction with protective elements for longevity and heavy use.',
-            'grippy': 'Grip-focused setup with softer wheels and enhanced traction components.'
+            'light': 'Lightweight configuration prioritizes agility with optimized component selection for minimal weight.',
+            'durable': 'Reinforced construction with protective elements designed for longevity and heavy use.',
+            'grippy': 'Traction-focused setup with softer wheels and enhanced grip components for maximum control.'
         };
         explanations.push(`<strong>Board Feel Optimization:</strong> ${boardFeelExplanations[data.boardFeel]}`);
 
