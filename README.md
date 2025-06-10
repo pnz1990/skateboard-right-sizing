@@ -2,7 +2,7 @@
 
 A physics-based web application that helps skateboarders select the optimal board components based on their body measurements, riding style, and scientific principles.
 
-## 🚀 Live Demo
+## 🚀 Live App
 
 Visit the live application: [https://pnz1990.github.io/skateboard-right-sizing/](https://pnz1990.github.io/skateboard-right-sizing/)
 
@@ -54,45 +54,6 @@ The calculator uses several scientific principles:
 - **CSS3**: Modern responsive design with CSS Grid and Flexbox
 - **Vanilla JavaScript**: No frameworks, pure ES6+ code
 - **Progressive Enhancement**: Works without JavaScript for basic functionality
-
-### Key Features
-- Real-time form validation
-- Smooth animations and transitions
-- Mobile-first responsive design
-- Accessibility compliant (WCAG guidelines)
-- SEO optimized
-
-### Performance
-- Lightweight: < 50KB total bundle size
-- Fast loading: Optimized assets and minimal dependencies
-- Offline capable: Static files cached by browser
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Modern web browser (Chrome, Firefox, Safari, Edge)
-- No additional software required
-
-### Local Development
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/pnz1990/skateboard-right-sizing.git
-   cd skateboard-right-sizing
-   ```
-
-2. Open `index.html` in your browser or serve with a local server:
-   ```bash
-   # Using Python
-   python -m http.server 8000
-   
-   # Using Node.js
-   npx serve .
-   
-   # Using PHP
-   php -S localhost:8000
-   ```
-
-3. Navigate to `http://localhost:8000`
 
 ### Deployment
 The app automatically deploys to GitHub Pages via GitHub Actions when changes are pushed to the main branch.

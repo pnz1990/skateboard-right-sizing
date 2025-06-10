@@ -21,20 +21,54 @@
                     <h2>Personal Information</h2>
                     
                     <div class="input-group">
-                        <label for="height">Height (cm)</label>
-                        <input type="number" id="height" name="height" min="120" max="220" step="1" required>
+                        <label for="height">Height</label>
+                        <div class="input-with-unit">
+                            <input type="number" id="height" name="height" step="1" required>
+                            <select id="height-unit" name="heightUnit" class="unit-selector">
+                                <option value="cm">cm</option>
+                                <option value="ft-in">ft/in</option>
+                            </select>
+                        </div>
+                        <div class="height-inputs" id="height-ft-in" style="display: none;">
+                            <input type="number" id="height-ft" name="heightFt" min="3" max="7" step="1" placeholder="ft">
+                            <input type="number" id="height-in" name="heightIn" min="0" max="11" step="1" placeholder="in">
+                        </div>
                         <div class="tooltip" data-tooltip="Your height affects deck length and wheelbase for optimal balance">ℹ️</div>
                     </div>
 
                     <div class="input-group">
-                        <label for="weight">Weight (kg)</label>
-                        <input type="number" id="weight" name="weight" min="30" max="150" step="1" required>
+                        <label for="weight">Weight</label>
+                        <div class="input-with-unit">
+                            <input type="number" id="weight" name="weight" step="1" required>
+                            <select id="weight-unit" name="weightUnit" class="unit-selector">
+                                <option value="kg">kg</option>
+                                <option value="lbs">lbs</option>
+                            </select>
+                        </div>
                         <div class="tooltip" data-tooltip="Weight determines truck strength and wheel hardness needed">ℹ️</div>
                     </div>
 
                     <div class="input-group">
-                        <label for="shoe-size">Shoe Size (EU)</label>
-                        <input type="number" id="shoe-size" name="shoeSize" min="35" max="50" step="0.5" required>
+                        <label for="shoe-size">Shoe Size</label>
+                        <div class="shoe-size-container">
+                            <div class="shoe-size-selectors">
+                                <select id="shoe-region" name="shoeRegion" required>
+                                    <option value="">Select Region</option>
+                                    <option value="US">US</option>
+                                    <option value="EU">EU</option>
+                                    <option value="UK">UK</option>
+                                    <option value="AU">Australia</option>
+                                    <option value="CN">China</option>
+                                    <option value="JP">Japan</option>
+                                    <option value="BR">Brazil</option>
+                                </select>
+                                <select id="shoe-gender" name="shoeGender" style="display: none;">
+                                    <option value="M">Men's</option>
+                                    <option value="W">Women's</option>
+                                </select>
+                            </div>
+                            <input type="number" id="shoe-size" name="shoeSize" step="0.5" required placeholder="Size">
+                        </div>
                         <div class="tooltip" data-tooltip="Shoe size helps determine optimal deck width for foot placement">ℹ️</div>
                     </div>
 
@@ -43,8 +77,9 @@
                         <select id="experience" name="experience" required>
                             <option value="">Select your level</option>
                             <option value="beginner">Beginner (0-6 months)</option>
-                            <option value="intermediate">Intermediate (6 months - 2 years)</option>
-                            <option value="advanced">Advanced (2+ years)</option>
+                            <option value="intermediate">Intermediate (6 months - 3 years)</option>
+                            <option value="comfortable">Comfortable (3-5 years)</option>
+                            <option value="advanced">Advanced (5+ years)</option>
                         </select>
                         <div class="tooltip" data-tooltip="Experience affects stability vs maneuverability preferences">ℹ️</div>
                     </div>

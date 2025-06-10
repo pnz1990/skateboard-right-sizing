@@ -290,7 +290,81 @@ body {
     margin-bottom: 5px;
 }
 
-/* Responsive Design */
+/* Input with unit selector styles */
+.input-with-unit {
+    display: flex;
+    gap: 8px;
+}
+
+.input-with-unit input {
+    flex: 1;
+}
+
+.unit-selector {
+    min-width: 80px;
+    flex-shrink: 0;
+}
+
+.height-inputs {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.height-inputs input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+
+.height-inputs input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+}
+
+/* Shoe size container styles */
+.shoe-size-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.shoe-size-selectors {
+    display: flex;
+    gap: 8px;
+}
+
+.shoe-size-selectors select {
+    flex: 1;
+}
+
+#shoe-size {
+    margin-top: 0;
+}
+
+/* Responsive adjustments for new inputs */
+@media (max-width: 480px) {
+    .input-with-unit {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .unit-selector {
+        min-width: auto;
+    }
+    
+    .shoe-size-selectors {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .height-inputs {
+        gap: 6px;
+    }
+}
 @media (max-width: 768px) {
     .container {
         padding: 15px;

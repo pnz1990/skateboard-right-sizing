@@ -6,6 +6,7 @@ class SkateboardCalculator {
         this.form = document.getElementById('skateboard-form');
         this.resultsContainer = document.getElementById('results-container');
         this.initializeEventListeners();
+        this.initializeUnitHandlers();
         this.hideResults();
     }
 
@@ -16,6 +17,99 @@ class SkateboardCalculator {
             input.addEventListener('input', () => this.handleInputChange());
             input.addEventListener('change', () => this.handleInputChange());
         });
+    }
+
+    initializeUnitHandlers() {
+        // Height unit handler
+        const heightUnit = document.getElementById('height-unit');
+        const heightInput = document.getElementById('height');
+        const heightFtIn = document.getElementById('height-ft-in');
+
+        heightUnit.addEventListener('change', () => {
+            if (heightUnit.value === 'ft-in') {
+                heightInput.style.display = 'none';
+                heightFtIn.style.display = 'flex';
+            } else {
+                heightInput.style.display = 'block';
+                heightFtIn.style.display = 'none';
+            }
+            this.handleInputChange();
+        });
+
+        // Shoe region handler
+        const shoeRegion = document.getElementById('shoe-region');
+        const shoeGender = document.getElementById('shoe-gender');
+
+        shoeRegion.addEventListener('change', () => {
+            // Show gender selector for regions that differentiate
+            if (['US', 'UK', 'AU', 'BR'].includes(shoeRegion.value)) {
+                shoeGender.style.display = 'block';
+                shoeGender.required = true;
+            } else {
+                shoeGender.style.display = 'none';
+                shoeGender.required = false;
+                shoeGender.value = 'M'; // Default to men's for regions without differentiation
+            }
+            this.handleInputChange();
+        });
+    }
+
+    // Unit conversion functions
+    convertHeightToCm(height, unit, heightFt = 0, heightIn = 0) {
+        if (unit === 'cm') {
+            return height;
+        } else if (unit === 'ft-in') {
+            return (heightFt * 30.48) + (heightIn * 2.54);
+        }
+        return height;
+    }
+
+    convertWeightToKg(weight, unit) {
+        if (unit === 'kg') {
+            return weight;
+        } else if (unit === 'lbs') {
+            return weight * 0.453592;
+        }
+        return weight;
+    }
+
+    // Shoe size conversion to EU (base standard)
+    convertShoeToEU(size, region, gender = 'M') {
+        const conversions = {
+            'US': {
+                'M': (us) => us + 32.5,
+                'W': (us) => us + 30.5
+            },
+            'UK': {
+                'M': (uk) => uk + 33,
+                'W': (uk) => uk + 32.5
+            },
+            'AU': {
+                'M': (au) => au + 32,
+                'W': (au) => au + 31.5
+            },
+            'CN': {
+                'M': (cn) => cn - 18,
+                'W': (cn) => cn - 18
+            },
+            'JP': {
+                'M': (jp) => jp - 18,
+                'W': (jp) => jp - 18
+            },
+            'BR': {
+                'M': (br) => br + 4,
+                'W': (br) => br + 2
+            },
+            'EU': {
+                'M': (eu) => eu,
+                'W': (eu) => eu
+            }
+        };
+
+        if (conversions[region] && conversions[region][gender]) {
+            return conversions[region][gender](size);
+        }
+        return size; // Fallback to original size
     }
 
     handleInputChange() {
@@ -32,14 +126,45 @@ class SkateboardCalculator {
 
     getFormData() {
         const formData = new FormData(this.form);
+        
+        // Get height in cm
+        const heightUnit = formData.get('heightUnit');
+        let heightCm = 0;
+        if (heightUnit === 'cm') {
+            heightCm = parseFloat(formData.get('height')) || 0;
+        } else if (heightUnit === 'ft-in') {
+            const heightFt = parseFloat(formData.get('heightFt')) || 0;
+            const heightIn = parseFloat(formData.get('heightIn')) || 0;
+            heightCm = this.convertHeightToCm(0, 'ft-in', heightFt, heightIn);
+        }
+
+        // Get weight in kg
+        const weightUnit = formData.get('weightUnit');
+        const weightInput = parseFloat(formData.get('weight')) || 0;
+        const weightKg = this.convertWeightToKg(weightInput, weightUnit);
+
+        // Get shoe size in EU
+        const shoeRegion = formData.get('shoeRegion');
+        const shoeGender = formData.get('shoeGender') || 'M';
+        const shoeSizeInput = parseFloat(formData.get('shoeSize')) || 0;
+        const shoeSizeEU = this.convertShoeToEU(shoeSizeInput, shoeRegion, shoeGender);
+
         return {
-            height: parseFloat(formData.get('height')) || 0,
-            weight: parseFloat(formData.get('weight')) || 0,
-            shoeSize: parseFloat(formData.get('shoeSize')) || 0,
+            height: heightCm,
+            weight: weightKg,
+            shoeSize: shoeSizeEU,
             experience: formData.get('experience') || '',
             ridingStyle: formData.get('ridingStyle') || '',
             terrain: formData.get('terrain') || '',
-            stabilityPreference: parseInt(formData.get('stabilityPreference')) || 5
+            stabilityPreference: parseInt(formData.get('stabilityPreference')) || 5,
+            // Store original units for display
+            originalHeight: weightInput,
+            heightUnit: heightUnit,
+            originalWeight: weightInput,
+            weightUnit: weightUnit,
+            originalShoeSize: shoeSizeInput,
+            shoeRegion: shoeRegion,
+            shoeGender: shoeGender
         };
     }
 
@@ -111,6 +236,7 @@ class SkateboardCalculator {
 
         // Adjust for experience (beginners need more stability)
         if (data.experience === 'beginner') baseWidth += 0.2;
+        if (data.experience === 'comfortable') baseWidth += 0.05;
         if (data.experience === 'advanced') baseWidth -= 0.1;
 
         // Calculate length based on height and riding style
@@ -167,6 +293,15 @@ class SkateboardCalculator {
         } else {
             if (data.stabilityPreference > 7) tightness = 'Medium-Tight';
             if (data.stabilityPreference < 3) tightness = 'Medium-Loose';
+        }
+
+        // Adjust for experience
+        if (data.experience === 'beginner') {
+            tightness = tightness.includes('Loose') ? 'Medium' : tightness;
+        } else if (data.experience === 'advanced') {
+            if (tightness === 'Medium' && data.stabilityPreference < 5) {
+                tightness = 'Medium-Loose';
+            }
         }
 
         return {
@@ -231,7 +366,7 @@ class SkateboardCalculator {
         if (data.ridingStyle === 'longboard' || data.ridingStyle === 'cruising') {
             bearingRating = 'ABEC 7'; // Higher precision for speed
         }
-        if (data.experience === 'advanced') {
+        if (data.experience === 'comfortable' || data.experience === 'advanced') {
             bearingRating = 'ABEC 7';
         }
 
@@ -326,13 +461,25 @@ class SkateboardCalculator {
         // Rolling resistance
         explanations.push(`<strong>Rolling Dynamics:</strong> ${wheelSpecs.diameter}mm wheels with ${wheelSpecs.hardness} hardness minimize rolling resistance while maximizing grip for your terrain.`);
 
-        // Weight distribution
+        // Weight distribution with converted units
+        const weightDisplay = data.weightUnit === 'kg' ? `${Math.round(data.weight)}kg` : `${Math.round(data.weight * 2.20462)}lbs`;
         if (data.weight > 80) {
-            explanations.push(`<strong>Load Distribution:</strong> Your weight (${data.weight}kg) requires ${truckSpecs.tightness.toLowerCase()} trucks to maintain proper load distribution and prevent speed wobbles.`);
+            explanations.push(`<strong>Load Distribution:</strong> Your weight (${weightDisplay}) requires ${truckSpecs.tightness.toLowerCase()} trucks to maintain proper load distribution and prevent speed wobbles.`);
         }
 
-        // Biomechanics
-        explanations.push(`<strong>Biomechanics:</strong> Setup optimized for your height (${data.height}cm) ensures natural stance width and efficient power transfer.`);
+        // Biomechanics with converted units
+        const heightDisplay = data.heightUnit === 'cm' ? `${Math.round(data.height)}cm` : 
+            `${Math.floor(data.height / 30.48)}'${Math.round((data.height % 30.48) / 2.54)}"`;
+        explanations.push(`<strong>Biomechanics:</strong> Setup optimized for your height (${heightDisplay}) ensures natural stance width and efficient power transfer.`);
+
+        // Experience level consideration
+        const experienceExplanations = {
+            'beginner': 'Setup prioritizes stability and forgiveness to build confidence.',
+            'intermediate': 'Balanced setup allows progression while maintaining control.',
+            'comfortable': 'Setup fine-tuned for your developed preferences and skills.',
+            'advanced': 'Performance-oriented setup maximizes responsiveness and precision.'
+        };
+        explanations.push(`<strong>Experience Factor:</strong> ${experienceExplanations[data.experience]}`);
 
         document.getElementById('physics-explanation').innerHTML = explanations.join('<br><br>');
     }
