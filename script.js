@@ -260,13 +260,13 @@ class SkateboardCalculator {
         // Base width from shoe size (convert to US first)
         const shoeSizeUS = this.convertToUSShoeSize(data.shoeSize, data.shoeRegion, data.shoeGender);
         
-        let baseWidth = 8.0; // Default
+        let baseWidth = 8.0; // Default - overindex on 8-9" range
         if (shoeSizeUS <= 7.5) {
             baseWidth = 7.875; // 7.75-8.0 range, choose middle-high
         } else if (shoeSizeUS >= 8 && shoeSizeUS <= 9.5) {
-            baseWidth = 8.25; // 8.0-8.5 range, choose middle
+            baseWidth = 8.25; // 8.0-8.5 range, choose middle (most common)
         } else if (shoeSizeUS >= 10) {
-            baseWidth = 9.0; // 8.5-9.5 range, choose middle
+            baseWidth = 8.75; // 8.5-9.5 range, favor lower end of range
         }
 
         // Add height adjustment
@@ -276,17 +276,40 @@ class SkateboardCalculator {
             baseWidth += 0.5;
         }
 
-        // Style adjustment
+        // Style adjustment - technical riders prefer narrower
         const styleAdjustments = {
-            'street': -0.25,
-            'park': 0,
-            'cruising': 0.5,
-            'longboard': 0.5,
-            'mixed': 0
+            'street': -0.375,    // More narrow for technical/flip tricks
+            'park': -0.125,      // Slightly narrow for technical park riding
+            'cruising': 0.5,     // Wider for stability
+            'longboard': 0.5,    // Wider for stability
+            'mixed': -0.125      // Slightly favor narrower for versatility
         };
         baseWidth += styleAdjustments[data.ridingStyle] || 0;
 
-        // Clamp to valid range
+        // Experience adjustment - more experienced = narrower for technical control
+        const experienceAdjustments = {
+            'beginner': 0.25,        // Wider for stability
+            'comfortable': 0.125,    // Slightly wider
+            'intermediate': -0.125,  // Slightly narrower
+            'advanced': -0.25        // Narrower for technical control
+        };
+        baseWidth += experienceAdjustments[data.experience] || 0;
+
+        // Overindex on 8-9" range - pull extreme sizes toward this range
+        if (baseWidth < 7.875) {
+            baseWidth = Math.max(baseWidth, 7.875); // Don't go too narrow
+        } else if (baseWidth > 9.25) {
+            baseWidth = Math.min(baseWidth, 9.25); // Don't go too wide
+        }
+        
+        // Strong bias toward 8-9" range
+        if (baseWidth < 8.0) {
+            baseWidth += 0.125; // Pull up toward 8"
+        } else if (baseWidth > 9.0) {
+            baseWidth -= 0.125; // Pull down toward 9"
+        }
+
+        // Clamp to valid range but favor 8-9"
         const deckWidth = Math.max(7.75, Math.min(10.0, baseWidth));
 
         // Calculate wheelbase and length based on style
@@ -573,14 +596,23 @@ class SkateboardCalculator {
     }
 
     getDeckExplanation(specs, data) {
-        let explanation = `Width ${specs.width}" matches your shoe size for optimal foot placement. `;
+        let explanation = `Width ${specs.width}" optimized for your shoe size and riding style. `;
         
         if (data.ridingStyle === 'street') {
-            explanation += "Narrower deck chosen for easier flip tricks and technical maneuvers. ";
+            explanation += "Narrower deck chosen for easier flip tricks and technical street maneuvers. ";
         } else if (data.ridingStyle === 'cruising') {
             explanation += "Wider deck provides more stability and comfort for cruising. ";
+        } else if (data.ridingStyle === 'park') {
+            explanation += "Balanced width for park riding with slight technical bias. ";
         } else {
             explanation += `Length ${specs.length}" provides good balance for your height and riding style. `;
+        }
+        
+        // Add experience-based explanation
+        if (data.experience === 'advanced' || data.experience === 'intermediate') {
+            explanation += "Narrower sizing reflects your technical skill level for better flip trick control. ";
+        } else if (data.experience === 'beginner') {
+            explanation += "Slightly wider for stability as you develop your skills. ";
         }
         
         // Add concave explanation
@@ -632,8 +664,8 @@ class SkateboardCalculator {
     updatePhysicsExplanation(data, deckSpecs, truckSpecs, wheelSpecs) {
         const explanations = [];
 
-        // Deck sizing explanation
-        explanations.push(`<strong>Deck Sizing Algorithm:</strong> Width ${deckSpecs.width}" calculated from shoe size with height and style adjustments. Industry-standard wheelbase ${deckSpecs.wheelbase}" optimized for ${data.ridingStyle} riding.`);
+        // Deck sizing explanation with technical bias
+        explanations.push(`<strong>Deck Sizing Algorithm:</strong> Width ${deckSpecs.width}" calculated from shoe size with technical rider bias toward narrower boards (8-9" sweet spot). Experience level ${data.experience} influences width for optimal flip trick control.`);
 
         // Truck setup explanation
         const responseLevel = 11 - data.stabilityPreference;
@@ -646,7 +678,12 @@ class SkateboardCalculator {
         const weightDisplay = data.weightUnit === 'kg' ? `${Math.round(data.weight)}kg` : `${Math.round(data.weight * 2.20462)}lbs`;
         const heightDisplay = data.heightUnit === 'cm' ? `${Math.round(data.height)}cm` : 
             `${Math.floor(data.height / 30.48)}'${Math.round((data.height % 30.48) / 2.54)}"`;
-        explanations.push(`<strong>Biomechanical Fit:</strong> Setup scaled for ${heightDisplay} height and ${weightDisplay} weight using proven skateboard industry ratios.`);
+        explanations.push(`<strong>Biomechanical Fit:</strong> Setup scaled for ${heightDisplay} height and ${weightDisplay} weight, with strong bias toward the most popular 8-9" deck range.`);
+
+        // Technical rider consideration
+        if (data.experience === 'advanced' || data.experience === 'intermediate') {
+            explanations.push(`<strong>Technical Rider Optimization:</strong> Narrower deck width prioritized for your ${data.experience} skill level to enhance flip trick control and technical maneuverability.`);
+        }
 
         // Flexibility accommodation
         const flexibilityExplanations = {
